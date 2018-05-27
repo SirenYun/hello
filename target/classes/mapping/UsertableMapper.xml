@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="dao.UsertableMapper">
+	<resultMap id="BaseResultMap" type="Controller.Usertable">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="username" property="username" jdbcType="VARCHAR" />
+		<result column="password" property="password" jdbcType="VARCHAR" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, username, password
+	</sql>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.Integer">
+		select
+		<include refid="Base_Column_List" />
+		from usertable
+		where id = #{id,jdbcType=INTEGER}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+		delete from
+		usertable
+		where id = #{id,jdbcType=INTEGER}
+	</delete>
+	<insert id="insert" parameterType="Controller.Usertable">
+		insert into usertable (id,
+		username, password
+		)
+		values (#{id,jdbcType=INTEGER},
+		#{username,jdbcType=VARCHAR},
+		#{password,jdbcType=VARCHAR}
+		)
+	</insert>
+	<insert id="insertSelective" parameterType="Controller.Usertable">
+		insert into usertable
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				id,
+			</if>
+			<if test="username != null">
+				username,
+			</if>
+			<if test="password != null">
+				password,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=INTEGER},
+			</if>
+			<if test="username != null">
+				#{username,jdbcType=VARCHAR},
+			</if>
+			<if test="password != null">
+				#{password,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKeySelective" parameterType="Controller.Usertable">
+		update usertable
+		<set>
+			<if test="username != null">
+				username = #{username,jdbcType=VARCHAR},
+			</if>
+			<if test="password != null">
+				password = #{password,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="Controller.Usertable">
+		update usertable
+		set username = #{username,jdbcType=VARCHAR},
+		password =
+		#{password,jdbcType=VARCHAR}
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+
+	<!-- 查询所有(N+1查询) -->
+	<select id="selectUserClasses" parameterType="java.lang.Integer"
+		resultType="Controller.UserClasses">
+		select
+		id,userId,classId from userClasses where
+		userId=#{id,jdbcType=INTEGER}
+	</select>
+	<resultMap type="Controller.Usertable" id="userResultMap"
+		extends="BaseResultMap">
+		<collection property="userClasses" column="id" javaType="list"
+			select="selectUserClasses">
+		</collection>
+	</resultMap>
+	<select id="getAll" resultMap="userResultMap">
+		select id, username, password from
+		usertable
+	</select>
+
+	<!-- 查询所有(联合查询) -->
+	<resultMap type="Controller.Usertable" id="userResultMap2"
+		extends="BaseResultMap">
+		<collection property="userClasses" javaType="list"
+			ofType="Controller.UserClasses">
+			<id property="id" column="u_id" />
+			<result property="classid" column="uc_classId" />
+			<result property="userid" column="uc_userId" />
+		</collection>
+	</resultMap>
+	<select id="getAll2" resultMap="userResultMap2">
+		SELECT u.id,
+		u.username,u.password,uc.id u_id,uc.classId uc_classId,uc.userId
+		uc_userId
+		FROM usertable u JOIN
+		userclasses uc
+		WHERE u.id=uc.userId;
+	</select>
+
+	<!-- 查询所有(多对多) -->
+	<resultMap type="Controller.Usertable" id="userResultMap3"
+		extends="BaseResultMap">
+		<collection property="userClasses" javaType="list"
+			ofType="Controller.UserClasses">
+			<id property="id" column="uc.id" />
+			<result property="classId" column="uc.classId" />
+			<result property="userId" column="uc.userId" />
+			<!-- 另一张表的关联 -->
+			<association property="classDemo" javaType="Controller.ClassDemo">
+				<id property="id" column="c_id" />
+				<result property="name" column="c_name" />
+				<result property="starttime" column="c_startTime" />
+			</association>
+		</collection>
+	</resultMap>
+	<select id="getAll3" resultMap="userResultMap3">
+		SELECT u.id,
+		u.username,u.password,uc.id,uc.classId,uc.userId,
+		c.id c_id,
+		c.name
+		c_name,
+		c.startTime c_startTime
+		FROM userclasses uc
+		JOIN usertable u ON
+		u.id=uc.userId
+		JOIN class c ON
+		c.id=uc.classId;
+	</select>
+
+	<!-- 查询所有(多对多-简化) -->
+	<resultMap type="Controller.Usertable" id="userResultMap4"
+		extends="BaseResultMap">
+		<collection property="classDemoList" javaType="list"
+			ofType="Controller.ClassDemo">
+			<id property="id" column="c_id" />
+			<result property="name" column="c_name" />
+			<result property="starttime" column="c_startTime" />
+		</collection>
+	</resultMap>
+	<select id="getAll4" resultMap="userResultMap4">
+		SELECT u.id,
+		u.username,u.password,uc.id,uc.classId,uc.userId,
+		c.id c_id,
+		c.name
+		c_name,
+		c.startTime c_startTime
+		FROM userclasses uc
+		JOIN usertable u ON
+		u.id=uc.userId
+		JOIN class c ON
+		c.id=uc.classId;
+	</select>
+
+	<select id="getByParameters" resultMap="BaseResultMap">
+		select * from usertable
+		where username=#{nn} and
+		password=#{np}
+	</select>
+</mapper>
